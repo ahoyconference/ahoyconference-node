@@ -1,0 +1,20 @@
+{
+  "name": "ahoyconference-node",
+  "description": "NodeJS component to turn zmq2sip into a WebRTC video conference service with SIP audio supprt",
+  "version": "0.0.1",
+  "author": "Klaus-Peter Junghanns",
+  "private": false,
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-uuid": "*",
+    "socket.io": "^2.2.0",
+    "zeromq": "5.1.0"
+  },
+  "scripts": {
+    "prestart": "npm install",
+    "start": "node server.js"
+  }
+}
