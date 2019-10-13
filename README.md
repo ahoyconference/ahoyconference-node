@@ -1,2 +1,2 @@
 # ahoyconference-node
-AhoyConference Node backend
+AhoyConference Node backend and minimalistic UI
