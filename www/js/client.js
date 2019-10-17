@@ -22,7 +22,6 @@ function updateMemberList() {
   var memberUuids = Object.keys(memberList);
   var list = myself.name + ' (you)';
   memberUuids.forEach(function(memberUuid) {
-  console.log('memberUuid ' + memberUuid);
     if (memberUuid != myself.uuid) {
       if (memberList[memberUuid].webrtc) {
         list += "\n" + memberList[memberUuid].name + ' (WebRTC)';
@@ -31,7 +30,6 @@ function updateMemberList() {
       }
     }
   });
-  console.log(list);
   memberListElement.innerHTML = list;
 }
 
@@ -43,6 +41,7 @@ function addStreamMediaElement(stream, muted) {
       video.setAttribute('muted', 'muted');
       video.muted = true;
     }
+    video.setAttribute('playsinline', 'playsinline');
     video.setAttribute('id', stream.uuid);
     document.body.append(video);
     return video;
@@ -63,13 +62,11 @@ function removeStreamMediaElement(stream) {
 socket.on('connect', function() {
 
   socket.on('memberJoined', function(member) {
-    console.log('memberJoined', member);
     memberList[member.uuid] = member;
     updateMemberList();
   })
 
   socket.on('memberLeft', function(member) {
-    console.log('memberLeft', member);
     delete memberList[member.uuid];
     updateMemberList();
     if (myself.uuid == member.uuid) {
@@ -103,7 +100,7 @@ socket.on('connect', function() {
           Object.keys(members[memberUuid].streams).forEach(function(streamUuid) {
             var stream = members[memberUuid].streams[streamUuid];
             addStreamMediaElement(stream);
-            socket.emit('subscribeStream', stream, true, true);
+            socket.emit('subscribeStream', stream, stream.audio, stream.video);
           });
         }
       });
@@ -176,9 +173,9 @@ socket.on('connect', function() {
     // the status of a stream changed
     if (member.uuid != myself.uuid) {
       if (active) {
-        console.log('member ' + member.uuid + ' started sending stream ' + stream.uuid);
+        console.log('member ' + member.uuid + ' started sending stream ' + stream.uuid + ' (audio: ' + stream.audio + ', video: ' + stream.video + ')');
         addStreamMediaElement(stream);
-        socket.emit('subscribeStream', stream, true, true);
+        socket.emit('subscribeStream', stream, stream.audio, stream.video);
       } else {
         console.log('member ' + member.uuid + ' stopped sending stream ' + stream.uuid);
         removeStreamMediaElement(stream);

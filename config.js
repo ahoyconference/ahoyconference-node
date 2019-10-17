@@ -35,7 +35,7 @@ a=mid:audio\r\n\
 a=sendonly\r\n\
 a=rtcp-mux\r\n\
 a=rtpmap:111 opus/48000/2\r\n\
-a=fmtp:111 minptime=10; useinbandfec=1; usedtx=1;\r\n\
+a=fmtp:111 minptime=10; useinbandfec=1; usedtx=0;\r\n\
 a=maxptime:60\r\n\
 ",
 
@@ -59,7 +59,7 @@ a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\n\
 a=sendonly\r\n\
 a=rtcp-mux\r\n\
 a=rtpmap:111 opus/48000/2\r\n\
-a=fmtp:111 minptime=10; useinbandfec=1; usedtx=1;\r\n\
+a=fmtp:111 minptime=10; useinbandfec=1; usedtx=0;\r\n\
 a=maxptime:60\r\n\
 m=video 9 RTP/SAVPF 100 116 117\r\n\
 c=IN IP4 0.0.0.0\r\n\
@@ -103,7 +103,7 @@ a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\n\
 a=recvonly\r\n\
 a=rtcp-mux\r\n\
 a=rtpmap:111 opus/48000/2\r\n\
-a=fmtp:111 minptime=10; useinbandfec=1; usedtx=1;\r\n\
+a=fmtp:111 minptime=10; useinbandfec=1; usedtx=0;\r\n\
 a=maxptime:60\r\n\
 m=video 9 RTP/SAVPF 100 116 117\r\n\
 c=IN IP4 0.0.0.0\r\n\

@@ -15,7 +15,7 @@ conferenceService.start();
 const messageBus = new MessageBus(config.messageBus);
 messageBus.start();
 
-const sipService = new SipService({ messageBus: config.messageBus, conferences: conferences }, conferenceService);
+const sipService = new SipService({ messageBus: config.messageBus, conferences: conferences }, conferenceService, mediaEngine);
 sipService.start();
 
 process.on('SIGINT', function() {
