@@ -61,7 +61,7 @@ a=rtcp-mux\r\n\
 a=rtpmap:111 opus/48000/2\r\n\
 a=fmtp:111 minptime=10; useinbandfec=1; usedtx=0;\r\n\
 a=maxptime:60\r\n\
-m=video 9 RTP/SAVPF 100 116 117\r\n\
+m=video 9 RTP/SAVPF 116 100\r\n\
 c=IN IP4 0.0.0.0\r\n\
 a=rtcp:9 IN IP4 0.0.0.0\r\n\
 a=ice-ufrag:Ipdz+ww6UqDI1Qoc\r\n\
@@ -80,7 +80,6 @@ a=rtcp-fb:100 nack\r\n\
 a=rtcp-fb:100 nack pli\r\n\
 a=rtcp-fb:100 goog-remb\r\n\
 a=rtpmap:116 red/90000\r\n\
-a=rtpmap:117 ulpfec/90000\r\n\
 ",
 
     transmitAudioVideo: "\r\n\
@@ -105,7 +104,7 @@ a=rtcp-mux\r\n\
 a=rtpmap:111 opus/48000/2\r\n\
 a=fmtp:111 minptime=10; useinbandfec=1; usedtx=0;\r\n\
 a=maxptime:60\r\n\
-m=video 9 RTP/SAVPF 100 116 117\r\n\
+m=video 9 RTP/SAVPF 116 100\r\n\
 c=IN IP4 0.0.0.0\r\n\
 a=rtcp:9 IN IP4 0.0.0.0\r\n\
 a=ice-ufrag:Ipdz+ww6UqDI1Qoc\r\n\
@@ -124,7 +123,6 @@ a=rtcp-fb:100 nack\r\n\
 a=rtcp-fb:100 nack pli\r\n\
 a=rtcp-fb:100 goog-remb\r\n\
 a=rtpmap:116 red/90000\r\n\
-a=rtpmap:117 ulpfec/90000\r\n\
 "
   }
 };
