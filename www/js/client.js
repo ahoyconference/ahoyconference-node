@@ -33,7 +33,7 @@ function updateMemberList() {
   memberListElement.innerHTML = list;
 }
 
-function addStreamMediaElement(stream, muted) {
+function addStreamMediaElement(stream, muted, mirrored) {
   if (stream.video) {
     var video = document.createElement('video');
     video.setAttribute('autoplay', 'autoplay');
@@ -43,6 +43,9 @@ function addStreamMediaElement(stream, muted) {
     }
     video.setAttribute('playsinline', 'playsinline');
     video.setAttribute('id', stream.uuid);
+    if (mirrored) {
+      video.style.cssText = "-moz-transform: scale(-1, 1); -webkit-transform: scale(-1, 1); -o-transform: scale(-1, 1); transform: scale(-1, 1); filter: FlipH;";
+    }
     document.body.append(video);
     return video;
   } else if (stream.audio) {
@@ -87,7 +90,7 @@ socket.on('connect', function() {
         function getUserMediaSuccess(stream) {
           var cameraStream = { name: "camera", mediaStream: stream, uuid: 'local_camera', audio: true, video: true };
 	  localStreams[cameraStream.name] = cameraStream;
-          addStreamMediaElement(cameraStream, true).srcObject = cameraStream.mediaStream;
+          addStreamMediaElement(cameraStream, true, true).srcObject = cameraStream.mediaStream;
           socket.emit('publishStream', cameraStream.name, true, true);
         },
         function getUserMediaError(error) {
