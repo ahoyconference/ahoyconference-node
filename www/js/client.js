@@ -8,6 +8,30 @@ var conferenceUsername = null;;
 var memberList = {};
 var memberListElement = document.getElementById('memberList');
 
+function addScreenSharingButton() {
+  if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+    var button = document.createElement('button');
+    button.innerText = 'share screen';
+    document.body.append(button);
+    button.onclick = function() {
+      navigator.mediaDevices.getDisplayMedia()
+        .then(function(mediaStream) {
+        var stream = { name: "screen", mediaStream: mediaStream  };
+        localStreams[stream.name] = stream;
+        socket.emit('publishStream', stream.name, true, true);
+        mediaStream.oninactive = function() {
+          socket.emit('unpublishStream', stream);
+          delete localStreams[stream.name];
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      })
+    }
+  }
+  document.body.append(document.createElement('hr'));
+}
+
 function joinConference() {
   if (conferenceId) return;
   conferenceId = document.getElementById('conferenceId').value;
@@ -81,6 +105,7 @@ socket.on('connect', function() {
     if (!success) {
       alert("An error occured while joining the conference. Please try again!");
     } else {
+      addScreenSharingButton()
       // list of conference members (including ourself)
       myself = member;
       memberList = members;
