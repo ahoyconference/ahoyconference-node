@@ -1,0 +1,9 @@
+.video_overlay {
+    position: absolute;
+    width: 100%;
+    z-index: 100;
+    opacity: 0.8;       /* modern browser */
+    -moz-opacity: 0.2;  /* older Mozilla browser */
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)"; /* IE8 in Standard Compliant Mode */
+    filter:alpha(opacity=20); /* IE5.x -7.0 */
+}

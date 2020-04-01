@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/open-iconic-bootstrap.css">
+  </head>
+  <body>
+
+    <div class="container">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-primary"">
+        <span class="navbar-brand mb-0 h1" id="header">Room</span>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+            </ul>
+            <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#deviceModal" onclick="updateDevices()"><span class="oi oi-cog"></span></button>
+            &nbsp;
+            <button class="btn btn-danger my-2 my-sm-0" data-toggle="modal" data-target="#exitModal">Exit</button>
+          </div>
+      </nav>
+
+      <div class="row">
+        <div class="col-7" id="videos">
+        </div>
+        <div class="col-5">
+          <ul id="memberList">
+          </ul>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm">
+          <textarea style="width: 100%;" rows="7" cols="80" id="chat" readonly></textarea>
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="col-sm">
+          <nav class="navbar navbar-light bg-light">
+            <form class="form-inline" onsubmit="event.preventDefault(); sendMessage()">
+              <input class="form-control mr-sm-2" type="search" placeholder="Type a message" aria-label="message" id="message">
+              <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Send</button>
+            </form>
+          </nav>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exitModal" tabindex="-1" role="dialog" aria-labelledby="exitModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exitModalLabel">Exit</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Do you really want to leave the room?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="leaveConference()">Leave</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- media devices modal -->
+    <div class="modal fade" id="deviceModal" tabindex="-1" role="dialog" aria-labelledby="deviceModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deviceModalLabel">Media devices</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="cameraDevice">Microphone</label>
+              <select class="form-control" id="micDevice">
+                <option>(none)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cameraDevice">Camera</label>
+              <select class="form-control" id="cameraDevice">
+                <option>(none)</option>
+              </select>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="applyDeviceChanges()">Apply changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
+    <script src="/js/adapter.js"></script>
+    <script src="/js/classroom.js"></script>
+    <script language="JavaScript">
+      try {
+        var cookieValue = decodeURIComponent(document.cookie.replace(/(?:(?:^|.*;\s*)conference\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
+
+        var json = JSON.parse(cookieValue);
+        if (json.conference) {
+          joinConference(json.conference, json.name?json.name:"", json.password?json.password:"");
+        }
+      } catch (error) {
+        console.log(error);
+//        document.location.href = '/error.html';
+      }
+
+    </script>
+  </body>
+</html>
