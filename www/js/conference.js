@@ -456,6 +456,7 @@ function registerSocketListeners(socket) {
 
   socket.on('memberJoined', function(member) {
     memberList[member.uuid] = member;
+    renderMediaStreams();
   })
 
   socket.on('memberLeft', function(member) {
