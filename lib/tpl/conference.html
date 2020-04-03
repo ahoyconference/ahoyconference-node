@@ -23,7 +23,7 @@
             &nbsp;
             <button class="btn btn-success d-none" id="unmuteCamButton" onclick="unmuteCam()">Turn cam on</button>
             <button class="btn btn-danger d-none" id="muteCamButton" onclick="muteCam()">Turn cam off</button>
-            <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#deviceModal" onclick="updateDevices()"><span class="oi oi-cog"></span></button>
+            <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#deviceModal" onclick="showMediaDevicesModal()"><span class="oi oi-cog"></span></button>
             &nbsp;
             <button class="btn btn-secondary d-none" id="screenShareButton" onclick="shareScreen()">Share screen</button>
             &nbsp;
@@ -98,7 +98,7 @@
                 <option>(none)</option>
               </select>
             </div>
-            
+
             <div class="form-group d-none" id="outputDeviceComponent">
               <label for="outputDevice">Audio output</label>
               <select class="form-control" id="outputDevice">

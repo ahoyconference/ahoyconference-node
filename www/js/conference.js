@@ -93,6 +93,23 @@ function addChatMessage(msg) {
   return false;
 }
 
+function showMediaDevicesModal() {
+  if ((localMicDeviceId === '') || (localCamDeviceId === '')) {
+    navigator.mediaDevices.getUserMedia({audio: true})
+      .then(function(stream) {
+        var tracks = stream.getTracks();
+        tracks.forEach(function(track) {
+          track.stop();
+        });
+        updateDevices();
+      })
+      .catch(function(error) {
+        console.log(error);
+      })
+  } else {
+    updateDevices();
+  }
+}
 
 function updateDevices() {
   if (HTMLMediaElement.prototype.setSinkId !== undefined) {
@@ -416,8 +433,8 @@ function applyDeviceChanges() {
       };
     }
 
-    navigator.getUserMedia(mediaConstraints,
-      function(stream) {
+    navigator.mediaDevices.getUserMedia(mediaConstraints)
+      .then(function(stream) {
         localStorage['localMicDeviceId'] = localMicDeviceId;
         localStorage['localCamDeviceId'] = localCamDeviceId;
 
@@ -438,7 +455,8 @@ function applyDeviceChanges() {
           $('#unmuteMicButton').addClass('d-none');
         }
         socket.emit('publishStream', localMediaStream.name, localMediaStream.audio, localMediaStream.video);
-      }, function (error) {
+      })
+      .catch(function (error) {
         // TODO add error modal
         console.log(error);
         delete localStorage['localMicDeviceId'];
@@ -510,9 +528,8 @@ function registerSocketListeners(socket) {
       memberList = members;
 
       if (mediaConstraints.audio || mediaConstraints.video) {
-        navigator.getUserMedia(
-          mediaConstraints,
-          function getUserMediaSuccess(stream) {
+        navigator.mediaDevices.getUserMedia(mediaConstraints)
+          .then(function(stream) {
             var localMediaStream = { name: "camera", mediaStream: stream, uuid: 'local_camera', audio: false, video: false };
             var tracks = stream.getTracks();
             tracks.forEach(function(track) {
@@ -538,11 +555,10 @@ function registerSocketListeners(socket) {
               $('#unmuteMicButton').addClass('d-none');
             }
             socket.emit('publishStream', localMediaStream.name, localMediaStream.audio, localMediaStream.video);
-          },
-          function getUserMediaError(error) {
+          })
+          .catch(function(error) {
             console.log(error);
-          }
-        );
+          })
       }
 
       var keys = Object.keys(members);
