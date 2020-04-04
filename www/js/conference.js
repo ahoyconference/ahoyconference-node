@@ -305,6 +305,18 @@ function renderMediaStreams() {
       var element = addStreamMediaElement(stream, false, false, 'col-' + size);
       if (element) {
         element.srcObject = stream.mediaStream;
+
+        if (typeof element.sinkId !== 'undefined') {
+          if (localOutputDeviceId) {
+            element.setSinkId(localOutputDeviceId)
+              .then(() => {
+                console.log('setSinkId: ' + localOutputDeviceId + ' on ' + element);
+              })
+              .catch((error) => {
+                console.log(error);
+              })
+          }
+        }
       }
     }
   });
@@ -345,18 +357,6 @@ function addStreamMediaElement(stream, muted, mirrored, size) {
       }
     });
 
-    if (typeof video.sinkId !== 'undefined') {
-      if (localOutputDeviceId) {
-        video.setSinkId(localOutputDeviceId)
-          .then(() => {
-            console.log('setSinkId: ' + localOutputDeviceId + ' on ' + video);
-          })
-          .catch((error) => {
-            console.log(error);
-          })
-      }
-    }
-
     div.append(video);
     div.append('<p class="mb-0"><strong>' + stream.displayName + '</strong></p>');
     col.append(div);
@@ -373,13 +373,6 @@ function addStreamMediaElement(stream, muted, mirrored, size) {
       var audio = document.createElement('audio');
       audio.setAttribute('autoplay', 'autoplay');
       audio.setAttribute('id', stream.uuid);
-
-      if (typeof audio.sinkId !== 'undefined') {
-        if (localOutputDeviceId) {
-          console.log('setSinkId: ' + localOutputDeviceId);
-          audio.setSinkId(localOutputDeviceId);
-        }
-      }
 
       col.append(audio);
       $('#media').append(col);
@@ -626,10 +619,6 @@ function registerSocketListeners(socket) {
     }
 
     pc.onaddstream = function(event) {
-      var video = document.getElementById(stream.uuid);
-      if (video) {
-        video.srcObject = event.stream;
-      }
       var memberStream = getMemberStreamByUuid(stream.uuid);
       if (memberStream) {
         memberStream.mediaStream = event.stream;
