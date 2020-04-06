@@ -7,3 +7,22 @@
     -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)"; /* IE8 in Standard Compliant Mode */
     filter:alpha(opacity=20); /* IE5.x -7.0 */
 }
+
+.wrapper-16-by-9 {
+	position: relative;
+	padding-bottom: 56.25%;
+	height: 0;
+}
+.wrapper-4-by-3 {
+	position: relative;
+	padding-bottom: 75%;
+	height: 0;
+}
+
+.element-with-aspect-ratio {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}

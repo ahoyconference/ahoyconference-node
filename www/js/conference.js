@@ -331,6 +331,8 @@ function addStreamMediaElement(stream, muted, mirrored, size) {
   }
 
   var div = $('<div class="alert alert-secondary" style="padding: 8px;"></div>');
+  var wrapper = $('<div class="wrapper-4-by-3"></div>');
+  var aspectRatio = $('<div class="element-with-aspect-ratio"></div>');
 
   if (stream.video) {
     var video = document.createElement('video');
@@ -344,20 +346,24 @@ function addStreamMediaElement(stream, muted, mirrored, size) {
     if (mirrored) {
       video.style.cssText = "-moz-transform: scale(-1, 1); -webkit-transform: scale(-1, 1); -o-transform: scale(-1, 1); transform: scale(-1, 1); filter: FlipH;";
     }
-    video.style.width= "100%";
+    video.style.height = "100%";
+    video.style.width = "100%";
     video.addEventListener('click', function() {
       if (video.requestFullscreen) {
-        video.requestFullscreen();
+        aspectRatio.get(0).requestFullscreen();
       } else if (video.mozRequestFullScreen) { /* Firefox */
-        video.mozRequestFullScreen();
+        aspectRatio.get(0).mozRequestFullScreen();
       } else if (video.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-        video.webkitRequestFullscreen();
+        aspectRatio.get(0).webkitRequestFullscreen();
       } else if (video.msRequestFullscreen) { /* IE/Edge */
-        video.msRequestFullscreen();
+        aspectRatio.get(0).msRequestFullscreen();
       }
     });
 
-    div.append(video);
+
+    aspectRatio.append(video);
+    wrapper.append(aspectRatio);
+    div.append(wrapper);
     div.append('<p class="mb-0"><strong>' + stream.displayName + '</strong></p>');
     col.append(div);
 
@@ -365,7 +371,9 @@ function addStreamMediaElement(stream, muted, mirrored, size) {
     return video;
   } else {
     var image = $('<img src="img/avatar.png" width="100%">');
-    div.append(image);
+    aspectRatio.append(image);
+    wrapper.append(aspectRatio);
+    div.append(wrapper);
     div.append('<p class="mb-0"><strong>' + stream.displayName + '</strong></p>');
     col.append(div);
 
