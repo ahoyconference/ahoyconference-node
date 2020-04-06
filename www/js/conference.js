@@ -24,13 +24,21 @@ function getMemberStreamByUuid(uuid) {
 function shareScreen() {
   if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
       navigator.mediaDevices.getDisplayMedia()
-        .then(function(mediaStream) {
-        var stream = { name: "screen", mediaStream: mediaStream, video: true  };
-        localStreams[stream.name] = stream;
-        socket.emit('publishStream', stream.name, true, true);
-        mediaStream.oninactive = function() {
-          socket.emit('unpublishStream', stream);
-          delete localStreams[stream.name];
+        .then(function(stream) {
+        var localMediaStream = { name: "screen", mediaStream: stream, audio: false, video: false  };
+        var tracks = stream.getTracks();
+        tracks.forEach(function(track) {
+          if (track.kind === 'audio') {
+            localMediaStream.audio = true;
+          } else if (track.kind === 'video') {
+            localMediaStream.video = true;
+          }
+        });
+        localStreams[localMediaStream.name] = localMediaStream;
+        socket.emit('publishStream', localMediaStream.name, localMediaStream.audio, localMediaStream.video);
+        stream.oninactive = function() {
+          socket.emit('unpublishStream', localMediaStream);
+          delete localStreams[localMediaStream.name];
           renderMediaStreams();
         }
       })
@@ -305,6 +313,7 @@ function renderMediaStreams() {
       var element = addStreamMediaElement(stream, false, false, 'col-' + size);
       if (element) {
         element.srcObject = stream.mediaStream;
+        element.play();
 
         if (typeof element.sinkId !== 'undefined') {
           if (localOutputDeviceId) {
@@ -359,7 +368,6 @@ function addStreamMediaElement(stream, muted, mirrored, size) {
         aspectRatio.get(0).msRequestFullscreen();
       }
     });
-
 
     aspectRatio.append(video);
     wrapper.append(aspectRatio);
@@ -439,7 +447,16 @@ function applyDeviceChanges() {
         localStorage['localMicDeviceId'] = localMicDeviceId;
         localStorage['localCamDeviceId'] = localCamDeviceId;
 
-        var localMediaStream = { name: "camera", mediaStream: stream, uuid: 'local_camera', audio: (localMicDeviceId != '')?true:false, video: (localCamDeviceId != '')?true:false };
+        var localMediaStream = { name: "camera", mediaStream: stream, uuid: 'local_camera', audio: false, video: false };
+        var tracks = stream.getTracks();
+        tracks.forEach(function(track) {
+          if (track.kind === 'audio') {
+            localMediaStream.audio = true;
+          } else if (track.kind === 'video') {
+            localMediaStream.video = true;
+          }
+        });
+
         localStreams[localMediaStream.name] = localMediaStream;
         if (localMediaStream.video) {
           $('#muteCamButton').removeClass('d-none');
