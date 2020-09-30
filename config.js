@@ -24,6 +24,10 @@ messageBus: {
   },
   sdp: {
     rtcpCheating: false,
+    videoSimulcast: "a=rid:1 recv\r\n\
+a=rid:2 recv\r\n\
+a=simulcast:recv 1;2\r\n\
+",
     receiveAudio: "\r\n\
 v=0\r\n\
 o=- 2498272862644297831 2 IN IP4 127.0.0.1\r\n\
@@ -69,7 +73,7 @@ a=fmtp:111 minptime=10; useinbandfec=1; usedtx=0;\r\n\
 a=maxptime:60\r\n\
 ",
 
-eceiveVideo: "\r\n\
+receiveVideo: "\r\n\
 v=0\r\n\
 o=- 2498272862644297831 2 IN IP4 127.0.0.1\r\n\
 s=-\r\n\

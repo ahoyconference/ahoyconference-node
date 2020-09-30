@@ -8,6 +8,9 @@ var conferenceId = null;
 var conference = {};
 var memberList = {};
 var isConnected = false;
+var audioContext = null;
+var audioOutputDestination = null;
+var audioOutputRecorder = null;
 
 function getMemberStreamByUuid(uuid) {
   var stream = null;
@@ -23,11 +26,20 @@ function getMemberStreamByUuid(uuid) {
 
 function shareScreen() {
   if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-      navigator.mediaDevices.getDisplayMedia()
+      var mediaConstraints = {
+        video: {
+          cursor: "always"
+        },
+        audio: {
+          echoCancellation: false
+        }
+      };
+      navigator.mediaDevices.getDisplayMedia(mediaConstraints)
         .then(function(stream) {
         var localMediaStream = { name: "screen", mediaStream: stream, audio: false, video: false  };
         var tracks = stream.getTracks();
         tracks.forEach(function(track) {
+          console.log('screensharing track kind ' + track.kind);
           if (track.kind === 'audio') {
             localMediaStream.audio = true;
           } else if (track.kind === 'video') {
@@ -49,11 +61,14 @@ function shareScreen() {
 }
 
 function leaveConference() {
+  stopRecording();
   socket.disconnect();
   document.location.href = '/?' + conferenceId;
 }
 
 function joinConference(conference, name, password) {
+//  $('#joinComponent').addClass('d-none');
+  $('#conferenceComponent').removeClass('d-none');
   conferenceId = conference;
   if (conference) {
     socket.emit('joinConferenceRequest', conference, password, name);
@@ -80,6 +95,10 @@ function kickMember(member) {
   socket.emit('kickMember', member);
 }
 
+function updateMemberData(data) {
+  socket.emit('updateMemberData', data);
+}
+
 function sendChatMessage(message) {
   socket.emit('chatMessage', { text: message });
 }
@@ -87,6 +106,8 @@ function sendChatMessage(message) {
 function sendMessage() {
   sendChatMessage($('#message').val());
   $('#message').val('');
+  audioOutput.play();
+  audioContext.resume();
 }
 
 function addChatMessage(msg) {
@@ -102,7 +123,8 @@ function addChatMessage(msg) {
 }
 
 function showMediaDevicesModal() {
-  if ((localMicDeviceId === '') || (localCamDeviceId === '')) {
+  var localStream = localStreams['camera'];
+  if (!localStream || !localStream.mediaStream) {
     navigator.mediaDevices.getUserMedia({audio: true})
       .then(function(stream) {
         var tracks = stream.getTracks();
@@ -117,6 +139,129 @@ function showMediaDevicesModal() {
   } else {
     updateDevices();
   }
+}
+
+function startRecording(audioBitrate, filename) {
+  console.log('starting audio recording with ' + audioBitrate + ' kbps to file ' + filename);
+  if (audioOutputRecorder) {
+    stopRecording();
+  }
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  audioOutputDestination = audioContext.createMediaStreamDestination();
+
+  var localStreamNames = Object.keys(localStreams);
+  localStreamNames.forEach(function(streamName) {
+    var stream = localStreams[streamName];
+    if (stream && stream.audio && stream.mediaStream) {
+      var mediaStreamSource = audioContext.createMediaStreamSource(stream.mediaStream);
+      mediaStreamSource.connect(audioOutputDestination);
+      console.log('recording local stream');
+    }
+  });
+
+  var keys = Object.keys(memberList);
+  keys.forEach(function(memberUuid) {
+    if (memberUuid != myself.uuid) {
+      var member = memberList[memberUuid];
+      Object.keys(member.streams).forEach(function(streamUuid) {
+        var stream = member.streams[streamUuid];
+        if (stream && stream.audio && stream.mediaStream) {
+          stream.mediaStreamSource = audioContext.createMediaStreamSource(stream.mediaStream);
+          stream.mediaStreamSource.connect(audioOutputDestination);
+          console.log('recording stream ' + stream.uuid + ' from member ' + member.name);
+        }
+      });
+    }
+  });
+
+  var options = {
+    audioBitsPerSecond : (audioBitrate * 1000),
+    mimeType : 'audio/ogg'
+  }
+  var chunks = [];
+  audioOutputRecorder = new MediaRecorder(audioOutputDestination.stream, options);
+  audioOutputRecorder.ondataavailable = function(event) {
+    console.log(event.data);
+    chunks.push(event.data);
+  };
+
+  audioOutputRecorder.onstop = function(event) {
+    var blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+    var a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+  };
+
+  audioOutputRecorder.start();
+  socket.emit('conferenceRecordingStatus', true);
+}
+
+function stopRecording() {
+  if (audioOutputRecorder) {
+    audioOutputRecorder.stop();
+    audioOutputRecorder = null;
+  }
+  if (audioOutputDestination) {
+//    audioOutputDestination.close();
+    audioOutputDestination = null;
+  }
+  socket.emit('conferenceRecordingStatus', false);
+  $('#startRecordingButton').removeClass('d-none');
+  $('#stopRecordingButton').addClass('d-none');
+}
+
+function startAudioRecording() {
+  if (myself.moderator) {
+    var audioBitrate = 128;
+    if (conference.options && conference.options.audioBitrate) {
+      audioBitrate = conference.options.audioBitrate;
+    }
+    var now = new Date();
+    var filename = conferenceId + ' ' + now.getTime();
+    startRecording(audioBitrate, filename);
+    $('#startRecordingButton').addClass('d-none');
+    $('#stopRecordingButton').removeClass('d-none');
+  }
+}
+
+function setAudioOutputDevice() {
+  return;
+  if (typeof audioOutput.sinkId !== 'undefined') {
+    if (localOutputDeviceId) {
+      audioOutput.setSinkId(localOutputDeviceId)
+        .then(() => {
+          console.log('setSinkId: ' + localOutputDeviceId + ' on ' + audioOutput);
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+    }
+  }
+}
+
+function updateConferenceStatus(conference) {
+  var status ='';
+  if (conference.locked) {
+    status = ' (locked';
+    if (conference.recordings > 0) {
+      status += ', recording';
+    }
+    status += ')';
+    $('#lockButton').addClass('d-none');
+    $('#unlockButton').removeClass('d-none');
+  } else {
+    if (conference.recordings > 0) {
+      status += ' (recording)';
+    }
+    $('#unlockButton').addClass('d-none');
+    $('#lockButton').removeClass('d-none');
+  }
+  $('#header').html('<b>Room ' + conference.conferenceId + status + '</b>');
 }
 
 function updateDevices() {
@@ -296,7 +441,7 @@ function renderMediaStreams() {
           stream.displayName += ' (no audio)';
         }
         var element = addStreamMediaElement(stream, true, (stream.name === 'screen')?false:true, 'col-' + size);
-        if (element) {
+        if (element && stream.video) {
           element.srcObject = stream.mediaStream;
         }
       }
@@ -304,27 +449,22 @@ function renderMediaStreams() {
   } else {
     // if we are not sharing any media provide a dummy stream, so we are visible in the UI
     var dummyStream = { name: '', uuid: 'dummy', audio: false, video: false, active: true, displayName: (myself.name + ' (no audio)')};
-    addStreamMediaElement(dummyStream, true, false, 'col-' + size);
+    addStreamMediaElement(dummyStream, true, true, 'col-' + size);
   }
 
   streamNames.forEach(function(streamName) {
     var stream = streams[streamName];
     if (stream) {
       var element = addStreamMediaElement(stream, false, false, 'col-' + size);
-      if (element) {
-        element.srcObject = stream.mediaStream;
-        element.play();
-
-        if (typeof element.sinkId !== 'undefined') {
-          if (localOutputDeviceId) {
-            element.setSinkId(localOutputDeviceId)
-              .then(() => {
-                console.log('setSinkId: ' + localOutputDeviceId + ' on ' + element);
-              })
-              .catch((error) => {
-                console.log(error);
-              })
-          }
+      if (element && (typeof element.sinkId !== 'undefined')) {
+        if (localOutputDeviceId) {
+          element.setSinkId(localOutputDeviceId)
+          .then(() => {
+            console.log('setSinkId: ' + localOutputDeviceId + ' on ' + element);
+          })
+          .catch((error) => {
+            console.log(error);
+          })
         }
       }
     }
@@ -376,26 +516,26 @@ function addStreamMediaElement(stream, muted, mirrored, size) {
     col.append(div);
 
     $('#media').append(col);
+    video.srcObject = stream.mediaStream;
     return video;
   } else {
+    var audio = null;
     var image = $('<img src="img/avatar.png" width="100%">');
     aspectRatio.append(image);
     wrapper.append(aspectRatio);
     div.append(wrapper);
     div.append('<p class="mb-0"><strong>' + stream.displayName + '</strong></p>');
     col.append(div);
-
     if (stream.audio && !muted) {
-      var audio = document.createElement('audio');
+      audio = document.createElement('audio');
       audio.setAttribute('autoplay', 'autoplay');
+      audio.setAttribute('playsinline', 'playsinline');
       audio.setAttribute('id', stream.uuid);
-
-      col.append(audio);
-      $('#media').append(col);
-      return audio;
-    } else {
-      $('#media').append(col);
+      aspectRatio.append(audio);
+      audio.srcObject = stream.mediaStream;
     }
+    $('#media').append(col);
+    return audio;
   }
 }
 
@@ -422,6 +562,7 @@ function applyDeviceChanges() {
   localStorage['localCamDeviceId'] = localCamDeviceId;
   localStorage['localOutputDeviceId'] = localOutputDeviceId;
 
+//  setAudioOutputDevice();
   if ((localCamDeviceId != '') || (localMicDeviceId != '')) {
     var mediaConstraints = {};
     if (localMicDeviceId != '') {
@@ -466,6 +607,11 @@ function applyDeviceChanges() {
           $('#unmuteCamButton').addClass('d-none');
         }
         if (localMediaStream.audio) {
+          if (audioOutputRecorder) {
+            var mediaStreamSource = audioContext.createMediaStreamSource(localMediaStream.mediaStream);
+            mediaStreamSource.connect(audioOutputDestination);
+            console.log('recording local stream');
+          }
           $('#muteMicButton').removeClass('d-none');
           $('#unmuteMicButton').addClass('d-none');
         } else {
@@ -496,6 +642,13 @@ function registerSocketListeners(socket) {
   })
 
   socket.on('memberLeft', function(member) {
+    Object.keys(memberList[member.uuid].streams).forEach(function(streamUuid) {
+      var stream = memberList[member.uuid].streams[streamUuid];
+      if (stream.mediaStreamSource) {
+        stream.mediaStreamSource.disconnect();
+        stream.mediaStreamSource = null;
+      }
+    });
     delete memberList[member.uuid];
     renderMediaStreams();
     if (myself.uuid == member.uuid) {
@@ -503,12 +656,15 @@ function registerSocketListeners(socket) {
     }
   })
 
-  socket.on('joinConferenceResponse', function(success, members, member, mode, options) {
+  socket.on('joinConferenceResponse', function(success, members, member, mode, options, locked, recordings) {
     if (!success) {
       alert("An error occured while joining the conference. Please try again!");
     } else {
       if (adapter.browserDetails.browser !== 'safari') {
         $('#screenShareButton').removeClass('d-none');
+      }
+      if (options.recording && window.MediaRecorder) {
+        $('#startRecordingButton').removeClass('d-none');
       }
 
       localMicDeviceId = localStorage['localMicDeviceId'];
@@ -539,8 +695,9 @@ function registerSocketListeners(socket) {
         };
       }
 
-      conference = { conferenceId: conferenceId, locked: false, options: options };
-      $('#header').html('<b>Room ' + conference.conferenceId + '</b>');
+      conference = { conferenceId: conferenceId, locked: false, options: options, locked: locked, recordings: recordings };
+      updateConferenceStatus(conference);
+
       // list of conference members (including ourself)
       myself = member;
       memberList = members;
@@ -581,14 +738,19 @@ function registerSocketListeners(socket) {
 
       var keys = Object.keys(members);
       if (keys.length > 1) {
+        var subscriptions = 0;
         keys.forEach(function(memberUuid) {
           if (memberUuid != myself.uuid) {
             Object.keys(members[memberUuid].streams).forEach(function(streamUuid) {
               var stream = members[memberUuid].streams[streamUuid];
               socket.emit('subscribeStream', stream, stream.audio, stream.video);
+              subscriptions++;
             });
           }
         });
+        if (subscriptions === 0) {
+          renderMediaStreams();
+        }
       } else {
         renderMediaStreams();
       }
@@ -613,7 +775,7 @@ function registerSocketListeners(socket) {
             function createAnswerOk(description) {
               localStream.pc.setLocalDescription(description,
                 function setLocalOk() {
-                  socket.emit('publishSdpResponse', description.sdp, stream.rxRtpEndpointId, stream.uuid);
+                  socket.emit('publishSdpResponse', description.sdp, stream.uuid);
                 },
                 function setLocalError(error) {
                   console.log(error);
@@ -634,7 +796,9 @@ function registerSocketListeners(socket) {
 
   })
 
-  socket.on('subscribeSdpRequest', function(sdp, endpointId, stream, turn) {
+// look up endpointId based on stream uuid
+  socket.on('subscribeSdpRequest', function(sdp, subscription, turn) {
+    console.log(subscription);
     // the backend sent a SDP offer for receiving a remote stream
     var pc = null;
     if (turn) {
@@ -642,11 +806,27 @@ function registerSocketListeners(socket) {
     } else {
       pc = new RTCPeerConnection();
     }
+//    console.log('subscribeSdpRequest: ' + sdp);
 
     pc.onaddstream = function(event) {
-      var memberStream = getMemberStreamByUuid(stream.uuid);
+      var memberStream = getMemberStreamByUuid(subscription.stream.uuid);
       if (memberStream) {
         memberStream.mediaStream = event.stream;
+        var hasAudio = false;
+        var tracks = event.stream.getTracks();
+        tracks.forEach(function(track) {
+          if (track.kind === 'audio') {
+            hasAudio = true;
+          }
+        });
+        console.log('hasAudio: ' + hasAudio + ' ' +memberStream.audio);
+        if (memberStream.audio) {
+          if (audioContext && audioOutputRecorder) {
+            var mediaStreamSource = audioContext.createMediaStreamSource(event.stream);
+            mediaStreamSource.connect(audioOutputDestination);
+            memberStream.mediaStreamSource = mediaStreamSource;
+          }
+        }
         renderMediaStreams();
       }
     };
@@ -657,7 +837,8 @@ function registerSocketListeners(socket) {
           function createAnswerOk(description) {
             pc.setLocalDescription(description,
               function setLocalOk() {
-                socket.emit('subscribeSdpResponse', description.sdp, endpointId, stream);
+//                console.log('subscribeSdpResponse: ' + description.sdp);
+                socket.emit('subscribeSdpResponse', description.sdp, subscription);
               },
               function setLocalError(error) {
                 console.log(error);
@@ -675,8 +856,13 @@ function registerSocketListeners(socket) {
     );
   })
 
+  socket.on('streamMediaEvent', function(stream, event, member) {
+    console.log('streamMediaEvent: member ' + member.uuid + ' stream ' + stream.uuid + ' event ' + event);
+  });
+
   socket.on('streamStatus', function(stream, active, member) {
-    console.log('streamStatus active ' + active + ' member ' + JSON.stringify(member) + ' audio ' +stream.audio + ' video ' + stream.video);
+//    console.log('streamStatus active ' + active + ' member ' + JSON.stringify(member) + ' audio ' +stream.audio + ' video ' + stream.video);
+    var memberStream = getMemberStreamByUuid(stream.uuid);
     // the status of a stream changed
     if (member.uuid != myself.uuid) {
       if (active) {
@@ -684,6 +870,10 @@ function registerSocketListeners(socket) {
         memberList[member.uuid].streams[stream.uuid] = {active: true, audio: stream.audio, video: stream.video, uuid: stream.uuid, name: stream.name};
         socket.emit('subscribeStream', stream, stream.audio, stream.video);
       } else {
+        if (memberStream && memberStream.memberStreamSource) {
+          memberStream.memberStreamSource.disconnect();
+          memberStream.memberStreamSource = null;
+        }
         console.log('member ' + member.uuid + ' stopped sending stream ' + stream.uuid);
         delete memberList[member.uuid].streams[stream.uuid];
         renderMediaStreams();
@@ -709,25 +899,32 @@ function registerSocketListeners(socket) {
     }
   })
 
-  socket.on('conferenceLockStatus', function(locked) {
-    if (locked) {
-      $('#lockButton').addClass('d-none');
-      $('#unlockButton').removeClass('d-none');
-      $('#header').html('<b>Room ' + conference.conferenceId + ' (locked)</b>');
-    } else {
-      $('#unlockButton').addClass('d-none');
-      $('#lockButton').removeClass('d-none');
-      $('#header').html('<b>Room ' + conference.conferenceId + '</b>');
-    }
+  socket.on('conferenceStatus', function(locked, recordings) {
+    conference.locked = locked;
+    conference.recordings = recordings;
+    updateConferenceStatus(conference);
   });
 
   socket.on('chatMessage', function(msg) {
     addChatMessage(msg);
   });
+
+  socket.on('updateMemberData', function(member) {
+    if (member.uuid !== undefined) {
+      if (memberList[member.uuid] !== undefined) {
+        memberList[member.uuid].name = member.name;
+      }
+      if (member.uuid === myself.uuid) {
+        myself.name = member.name;
+      }
+      renderMediaStreams();
+    }
+  });
 }
 
 socket.on('reconnect', function() {
   console.log('reconnected');
+  stopRecording();
   setTimeout(function() {
     document.location.reload();
   }, 1000);

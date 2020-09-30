@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="css/app.css">
   </head>
   <body>
-
     <div class="container-fluid">
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <span class="navbar-brand mb-0 h1" id="header">Room</span>
@@ -19,6 +18,9 @@
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
             </ul>
+            <button class="btn btn-success my-2 my-sm-0 d-none" data-toggle="modal" data-target="#recordingModal" id="startRecordingButton">Start recording</button>
+            <button class="btn btn-danger my-2 my-sm-0 d-none" id="stopRecordingButton" onclick='stopRecording()'>Stop recording</button>
+            &nbsp;
             <button class="btn btn-danger my-2 my-sm-0" data-toggle="modal" data-target="#lockModal" id="lockButton">Lock room</button>
             <button class="btn btn-success my-2 my-sm-0 d-none" id="unlockButton" onclick='unlockConference()'>Unlock room</button>
             &nbsp;
@@ -94,6 +96,26 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="lockConference()">Lock</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="recordingModal" tabindex="-1" role="dialog" aria-labelledby="recordingModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="recordingkModalLabel">Start recording?</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Do you want to start recording the audio of the conference?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="startAudioRecording()">Record</button>
           </div>
         </div>
       </div>

@@ -347,6 +347,10 @@ function registerSocketListeners(socket) {
       memberList = members;
       updateMemberList();
 
+      if (myself.moderator) {
+        $('#camDeviceComponent').removeClass('d-none');
+      }
+
       if (mediaConstraints.audio || mediaConstraints.video) {
         console.log(mediaConstraints);
         navigator.getUserMedia(
@@ -406,7 +410,7 @@ console.log(turn);
             function createAnswerOk(description) {
               localStream.pc.setLocalDescription(description,
                 function setLocalOk() {
-                  socket.emit('publishSdpResponse', description.sdp, stream.rxRtpEndpointId, stream.uuid);
+                  socket.emit('publishSdpResponse', description.sdp, stream.uuid);
                 },
                 function setLocalError(error) {
                   console.log(error);
@@ -426,7 +430,7 @@ console.log(turn);
 
   })
 
-  socket.on('subscribeSdpRequest', function(sdp, endpointId, stream, turn) {
+  socket.on('subscribeSdpRequest', function(sdp, subscription, turn) {
     // the backend sent a SDP offer for receiving a remote stream
     console.log(turn);
     var pc = null;
@@ -437,7 +441,7 @@ console.log(turn);
     }
 
     pc.onaddstream = function(event) {
-      var video = document.getElementById(stream.uuid);
+      var video = document.getElementById(subscription.stream.uuid);
       video.srcObject = event.stream;
     };
     pc.setRemoteDescription(
@@ -447,7 +451,7 @@ console.log(turn);
           function createAnswerOk(description) {
             pc.setLocalDescription(description,
               function setLocalOk() {
-                socket.emit('subscribeSdpResponse', description.sdp, endpointId, stream);
+                socket.emit('subscribeSdpResponse', description.sdp, subscription);
               },
               function setLocalError(error) {
                 console.log(error);
