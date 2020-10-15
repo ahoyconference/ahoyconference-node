@@ -117,9 +117,12 @@
         var cookieValue = decodeURIComponent(document.cookie.replace(/(?:(?:^|.*;\s*)conference\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
 
         var json = JSON.parse(cookieValue);
-        if (json.conference) {
+        if (json.token) {
+          joinConferenceWithToken(json.token, json.name);
+        } else if (json.conference) {
           joinConference(json.conference, json.name?json.name:"", json.password?json.password:"");
         }
+
       } catch (error) {
         console.log(error);
 //        document.location.href = '/error.html';

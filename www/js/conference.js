@@ -5,6 +5,7 @@ var localOutputDeviceId = null;
 var localStreams = {};
 var myself = null;
 var conferenceId = null;
+var token = null;
 var conference = {};
 var memberList = {};
 var isConnected = false;
@@ -63,15 +64,25 @@ function shareScreen() {
 function leaveConference() {
   stopRecording();
   socket.disconnect();
-  document.location.href = '/?' + conferenceId;
+  if (token) {
+    document.location.href = 'link?token=' + token;
+  } else {
+    document.location.href = '/?' + conferenceId;
+  }
 }
 
 function joinConference(conference, name, password) {
-//  $('#joinComponent').addClass('d-none');
   $('#conferenceComponent').removeClass('d-none');
-  conferenceId = conference;
   if (conference) {
     socket.emit('joinConferenceRequest', conference, password, name);
+  }
+}
+
+function joinConferenceWithToken(authToken, name) {
+  $('#conferenceComponent').removeClass('d-none');
+  token = authToken;
+  if (conference) {
+    socket.emit('joinConferenceRequest', null, null, name, token);
   }
 }
 
@@ -101,6 +112,10 @@ function updateMemberData(data) {
 
 function sendChatMessage(message) {
   socket.emit('chatMessage', { text: message });
+}
+
+function requestAuthToken() {
+  socket.emit('authTokenRequest');
 }
 
 function sendMessage() {
@@ -761,6 +776,7 @@ function registerSocketListeners(socket) {
     // the backend sent a SDP offer for publishing our local stream
     if (localStreams[stream.name]) {
       var localStream = localStreams[stream.name];
+      localStream.uuid = stream.uuid;
       if (turn) {
         localStream.pc = new RTCPeerConnection(turn);
       } else {
@@ -919,6 +935,10 @@ function registerSocketListeners(socket) {
       }
       renderMediaStreams();
     }
+  });
+
+  socket.on('authTokenResponse', function(success, token) {
+    console.log('success: ' + success + ' token: ' + token);
   });
 }
 

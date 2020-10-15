@@ -1,5 +1,9 @@
 module.exports = {
-messageBus: {
+  jwt: {
+    secret: "s8df9aosinfas89dfCh4ng3M3",
+    expiry: '2d'
+  },
+  messageBus: {
     messageUri: "tcp://127.0.0.1:5001",
     subscriptionUri: "tcp://127.0.0.1:5002"
   },

@@ -4,6 +4,7 @@ var localMicDeviceId = null;
 var localStreams = {};
 var myself = null;
 var conferenceId = null;
+var token = null;
 var conference = {};
 var memberList = {};
 var memberListElement = document.getElementById('memberList');
@@ -34,13 +35,26 @@ function shareScreen() {
 
 function leaveConference() {
   socket.disconnect();
-  document.location.href = '/?' + conferenceId;
+  if (token) {
+    document.location.href = 'link?token=' + token;
+  } else {
+    document.location.href = '/?' + conferenceId;
+  }
 }
 
 function joinConference(conference, name, password) {
   conferenceId = conference;
   if (conference) {
     socket.emit('joinConferenceRequest', conference, password, name);
+  }
+}
+
+function joinConferenceWithToken(authToken, name) {
+  $('#conferenceComponent').removeClass('d-none');
+  token = authToken;
+  conferenceId = conference;
+  if (conference) {
+    socket.emit('joinConferenceRequest', null, null, name, token);
   }
 }
 
@@ -395,7 +409,7 @@ function registerSocketListeners(socket) {
     // the backend sent a SDP offer for publishing our local stream
     if (localStreams[stream.name]) {
       var localStream = localStreams[stream.name];
-console.log(turn);
+      localStream.uuid = stream.uuid;
       if (turn) {
         localStream.pc = new RTCPeerConnection(turn);
       } else {
