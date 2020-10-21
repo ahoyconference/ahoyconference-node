@@ -671,10 +671,13 @@ function registerSocketListeners(socket) {
     }
   })
 
-  socket.on('joinConferenceResponse', function(success, members, member, mode, options, locked, recordings) {
+  socket.on('joinConferenceResponse', function(success, members, member, mode, options, locked, recordings, conferenceName) {
     if (!success) {
       alert("An error occured while joining the conference. Please try again!");
     } else {
+      if (!conferenceId) {
+        conferenceId = conferenceName;
+      }
       if (adapter.browserDetails.browser !== 'safari') {
         $('#screenShareButton').removeClass('d-none');
       }

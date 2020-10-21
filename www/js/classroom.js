@@ -319,11 +319,14 @@ function registerSocketListeners(socket) {
     }
   })
 
-  socket.on('joinConferenceResponse', function(success, members, member, mode, options) {
+  socket.on('joinConferenceResponse', function(success, members, member, mode, options, locked, recordings, conferenceName) {
     console.log(mode);
     if (!success) {
       alert("An error occured while joining the conference. Please try again!");
     } else {
+      if (!conferenceId) {
+        conferenceId = conferenceName;
+      }
       localMicDeviceId = localStorage['localMicDeviceId'];
       localCamDeviceId = localStorage['localCamDeviceId'];
       var mediaConstraints = {};
