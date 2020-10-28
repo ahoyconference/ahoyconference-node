@@ -193,7 +193,7 @@ function startRecording(audioBitrate, filename) {
 
   var options = {
     audioBitsPerSecond : (audioBitrate * 1000),
-    mimeType : 'audio/ogg'
+    mimeType : 'audio/webm'
   }
   var chunks = [];
   audioOutputRecorder = new MediaRecorder(audioOutputDestination.stream, options);
@@ -203,7 +203,7 @@ function startRecording(audioBitrate, filename) {
   };
 
   audioOutputRecorder.onstop = function(event) {
-    var blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+    var blob = new Blob(chunks, { 'type' : 'audio/webm; codecs=opus' });
     var a = document.createElement('a');
     a.style.display = 'none';
     a.href = URL.createObjectURL(blob);
@@ -237,7 +237,7 @@ function startAudioRecording() {
       audioBitrate = conference.options.audioBitrate;
     }
     var now = new Date();
-    var filename = conferenceId + ' ' + now.getTime();
+    var filename = conferenceId + '-' + now.getTime() + '.webm';
     startRecording(audioBitrate, filename);
     $('#startRecordingButton').addClass('d-none');
     $('#stopRecordingButton').removeClass('d-none');
