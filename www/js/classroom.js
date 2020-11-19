@@ -517,6 +517,9 @@ function registerSocketListeners(socket) {
 
             }
           }
+          stopStream(localStream);
+          delete localStreams[stream.name];
+          renderMediaStreams();
         }
       }
       updateMemberList();
