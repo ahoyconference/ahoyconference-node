@@ -596,6 +596,10 @@ function applyDeviceChanges() {
           exact: localCamDeviceId
         }
       };
+      if (conference.options && conference.options.camera) {
+        mediaConstraints.video['width'] = conference.options.camera.width;
+        mediaConstraints.video['height'] = conference.options.camera.height;
+      }
     }
 
     navigator.mediaDevices.getUserMedia(mediaConstraints)
@@ -703,14 +707,25 @@ function registerSocketListeners(socket) {
           mediaConstraints.audio['echoCancellation']  = options.echoCancellation;
         }
       }
+
       if (localCamDeviceId === undefined) {
-        mediaConstraints.video = true;
+        if (options && options.camera) {
+          mediaConstraints.video = {};
+          mediaConstraints.video['width'] = options.camera.width;
+          mediaConstraints.video['height'] = options.camera.height;
+        } else {
+          mediaConstraints.video = true;
+        }
       } else if (localCamDeviceId != '') {
         mediaConstraints.video = {
           deviceId: {
             exact: localCamDeviceId
           }
         };
+        if (options && options.camera) {
+          mediaConstraints.video['width'] = options.camera.width;
+          mediaConstraints.video['height'] = options.camera.height;
+        }
       }
 
       conference = { conferenceId: conferenceId, locked: false, options: options, locked: locked, recordings: recordings };
