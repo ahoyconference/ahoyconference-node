@@ -140,7 +140,7 @@ function addChatMessage(msg) {
 function showMediaDevicesModal() {
   var localStream = localStreams['camera'];
   if (!localStream || !localStream.mediaStream) {
-    navigator.mediaDevices.getUserMedia({audio: true})
+    navigator.mediaDevices.getUserMedia({audio: true, video: true})
       .then(function(stream) {
         var tracks = stream.getTracks();
         tracks.forEach(function(track) {
@@ -150,6 +150,17 @@ function showMediaDevicesModal() {
       })
       .catch(function(error) {
         console.log(error);
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then(function(stream) {
+          var tracks = stream.getTracks();
+          tracks.forEach(function(track) {
+            track.stop();
+          });
+          updateDevices();
+        })
+        .catch(function(error) {
+          console.log(error);
+        })
       })
   } else {
     updateDevices();
