@@ -12,7 +12,12 @@ module.exports = {
     zmqEventUri: "tcp://127.0.0.1:2998"
   },
   socketIo: {
+    url: "https://test.ahoyrtc.com",
     port: 4000
+  },
+  echotest: {
+    duration: 30,
+    videoBitrate: 1000
   },
   conferences: {
     "test": {
