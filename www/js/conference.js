@@ -905,7 +905,7 @@ function registerSocketListeners(socket) {
     console.log('streamMediaEvent: member ' + member.uuid + ' stream ' + stream.uuid + ' event ' + event);
   });
 
-  socket.on('streamStatus', function(stream, active, member) {
+  socket.on('streamStatus', function(stream, active, member, reason) {
 //    console.log('streamStatus active ' + active + ' member ' + JSON.stringify(member) + ' audio ' +stream.audio + ' video ' + stream.video);
     var memberStream = getMemberStreamByUuid(stream.uuid);
     // the status of a stream changed
@@ -919,7 +919,7 @@ function registerSocketListeners(socket) {
           memberStream.memberStreamSource.disconnect();
           memberStream.memberStreamSource = null;
         }
-        console.log('member ' + member.uuid + ' stopped sending stream ' + stream.uuid);
+        console.log('member ' + member.uuid + ' stopped sending stream ' + stream.uuid + ' (reason: ' + reason + ')');
         delete memberList[member.uuid].streams[stream.uuid];
         renderMediaStreams();
       }
@@ -931,6 +931,12 @@ function registerSocketListeners(socket) {
 
         localStream.active = active;
         if (!active) {
+          if (reason) {
+            console.log('reason: ' + reason);
+            if (reason === 'rtp_timeout') {
+              alert('Your network connection does not allow WebRTC traffic. Audio and video will not be possible.');
+            }
+          }
           if (localStream.pc) {
             try {
               localStream.pc.close();
