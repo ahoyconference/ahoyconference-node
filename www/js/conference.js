@@ -682,7 +682,9 @@ function registerSocketListeners(socket) {
     delete memberList[member.uuid];
     renderMediaStreams();
     if (myself.uuid == member.uuid) {
-      document.location.reload();
+      if (!token) {
+        document.location.href = '/?' + conferenceId;
+      }
     }
   })
 

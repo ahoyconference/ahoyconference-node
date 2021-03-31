@@ -319,7 +319,9 @@ function registerSocketListeners(socket) {
     delete memberList[member.uuid];
     updateMemberList();
     if (myself.uuid == member.uuid) {
-      document.location.reload();
+      if (!token) {
+        document.location.href = '/?' + conferenceId;
+      }
     }
   })
 
